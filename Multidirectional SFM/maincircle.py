@@ -13,19 +13,19 @@ def save_pedestrian_distance_to_csv(people_list, csv_filename, time, pixels_to_m
             writer.writerow([person.id, time, math.sqrt(person.v[0] ** 2 + person.v[1] ** 2), total_distance])
 
 # Constants and initializations
-num_people = 30  # Number of people in the circular formation
+num_people = 30  # Number of people
 delta_time = 0.005
 arg_A = 2000
 arg_B = -0.08
 arg_C = 0.2
 pixels_to_meters = 0.02
-radius_outer_circle = 100  # Radius of the outer circle for density calculation
+radius_outer_circle = 100  # Radius of the outer circle
 
 # File paths
-csv_filename_velocity = 'velocity_data.csv'  # CSV file to save the velocity data
-csv_filename_distance = 'distance_data.csv'  # CSV file to save the distance data
-trajectory_filename = 'trajectory_data.csv'  # CSV file to save trajectory data
-density_filename = 'density_data.csv'  # CSV file to save density data
+csv_filename_velocity = 'velocity_data.csv'  
+csv_filename_distance = 'distance_data.csv'  
+trajectory_filename = 'trajectory_data.csv'
+density_filename = 'density_data.csv'  
 
 # Initialize GUI and PeopleList
 gui = GUI()
