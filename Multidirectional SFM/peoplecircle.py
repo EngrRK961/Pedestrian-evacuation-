@@ -18,7 +18,7 @@ class People:
         self.a = (0, 0)  # Present acceleration
         self.prev_location = self.location  # Previous location for calculating displacement
         self.total_displacement = 0  # Total displacement for calculating average velocity
-        self.start_time = None  # Initialize start time attribute
+        self.start_time = None  # Initialize start time
         self.distance_covered = 0
 
     def start_movement(self, start_time):
