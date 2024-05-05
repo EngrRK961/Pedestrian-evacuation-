@@ -36,8 +36,8 @@ center_y = 355
 radius_inner_circle = 100
 
 # File paths
-csv_filename_velocity = 'D:\multidirectional flow modeling Final\velocity_data.csv'  # CSV file to save the velocity data
-csv_filename_distance = 'D:\multidirectional flow modeling Final\distance_data.csv'  # CSV file to save the distance data
+csv_filename_velocity = 'velocity_data.csv'  # CSV file to save the velocity data
+csv_filename_distance = 'distance_data.csv'  # CSV file to save the distance data
 trajectory_filename = 'trajectory_data.csv'  # CSV file to save trajectory data
 density_filename = 'density_data.csv'  # CSV file to save density data
 
