@@ -2,171 +2,49 @@ import random
 import math
 import numpy as np
 
-
 class People:
     def __init__(self, _id, _type, _loc_x, _loc_y, target_x, target_y):
         self.target_reached = False
+        self.time_reached = None
+        self.average_speed = 0
         self.id = _id  # ID of the person
         self.type = _type  # Direction
-        self.dt = 0.02 + random.randint(0, 6) / 100  # Time interval
+        self.dt =0.04 #0.02 + random.randint(0, 6) / 100  # Time interval
         self.weight = 50 + random.randint(0, 20)  # Weight
-        self.radius = 5 #(10 + random.randint(0, 5)) / 2  # Size
-        self.target_v =(60 + random.randint(0, 60)) / 100  # Target speed
+        self.radius = (10 + random.randint(0, 5)) / 2  # Size
+        self.target_v = (60 + random.randint(0, 60)) / 100  # Target speed
         self.location = (_loc_x, _loc_y)  # Position
         self.target_location = (target_x, target_y)  # Target end position
         self.v = (0, 0)  # Present speed
         self.a = (0, 0)  # Present acceleration
         self.prev_location = self.location  # Previous location for calculating displacement
         self.total_displacement = 0  # Total displacement for calculating average velocity
-        self.start_time = None  # Initialize start time
+        self.start_time = None  # Initialize start time attribute
         self.distance_covered = 0
 
-    def start_movement(self, start_time):
-        self.start_time = start_time
-
-    def reach_destination(self):
-        return self.start_time if self.start_time else 0
-
-    def ped_repulsive_force(self):
-        """ Calculate the repulsive force between pedestrians and other pedestrians.
-
-        Using the formula:
-            f_i = ∑(j)f_ij Result
-            f_ij = A * e^((r_ij - d_ij) / B) * n_ij
-            r_ij = r_i + r_j Sum of the radii
-            d_ij = ||r_i - r_j|| Distance between the centers
-            n_ij = (r_i - r_j) / d_ij Unit direction vector
-
-        :return: The combined force exerted by other pedestrians on this person f_i
-        """
-        others = list(self.scene.peds)
-        others.remove(self)
-        force = Vector2D(0.0, 0.0)
-        for other in others:
-            d_vec = self.distance_to(other)
-            d = d_vec.norm()
-            n = d_vec / d   # n is a unit vector
-            radius_sum = self.radius + other.radius
-            force += param['A'] * math.exp((radius_sum - d) / param['B']) * n
-        return force
-
-    def wall_repulsive_force(self):
-        """ Calculate the repulsive force from obstacles or walls
-
-        Use the formula:
-            ∑(W)f_iW result
-            f_iW = A * e^((ri-diW)/B) * niW
-        Note that niW is a vector, and the direction of niW is from the wall to the pedestrian.
-
-        :return: The combined force of all walls and obstacles on the person
-        """
-        force = Vector2D(0.0, 0.0)
-        for box in self.scene.boxes:
-            d_vec = self.distance_to(box)
-            if d_vec.norm() == 0:
-                print("Hit the wall")
-                continue
-            n = d_vec / d_vec.norm()    # n is a vector
-            force += param['A'] * math.exp((self.radius - d_vec.norm()) / param['B']) * n
-        return force
-
-    def desired_force(self):
-        """ Calculate expected power
-        Use formula:
-            m * (v * e - vc) / t_c
-            m is the mass, v is the desired velocity, and e is the desired direction(get_direction())
-            vc is the current speed, t_c is the characteristic time
-        :return: expectancy
-        """
-        e = SFM.PathFinder.get_direction(self.scene, self)
-        return (param['desired_speed'] * e - self.vel) / param['ch_time'] * self.mass
-
-    def get_force(self):
-        """ Calculate net force"""
-        f1 = self.ped_repulsive_force()
-        f2 = self.wall_repulsive_force()
-        f3 = self.desired_force()
-        if path_finder_test:
-            return f3
-        return f1 + f2 + f3
-
-    def accleration(self):
-        """ Calculate acceleration based on resultant force and mass
-        :return: acceleration
-        """
-        acc = self.get_force() / self.mass
-        if acc.norm() > 5:
-            acc = acc / acc.norm() * 4
-        return acc
-
-    def compute_next(self, scene):
-        self.scene = scene
-        self.next_pos = self.pos + self.vel * param['time_step']
-        acc = self.accleration()
-        self.next_vel = self.vel + acc * param['time_step']
-
-    def update_status(self):
-        """ Update the person's location and velocity
-        Pre-conditions: First call compute_next()
-
-Note that all pedestrians should update their position and velocity simultaneously
-        """
-        self.pos = self.next_pos
-        self.vel = self.next_vel
-
+    # Method to update time_reached and average_speed
+    def update_data(self, time_reached, average_speed):
+        self.time_reached = time_reached
+        self.average_speed = average_speed
 
 class PeopleList:
-    def __init__(self, num_people, delta_time, center_x=540, center_y=355, radius_inner_circle=1):
+    def __init__(self, num_people, delta_time, center_x=540, center_y=355):
         self.delta_time = delta_time
         self.num_people = num_people
-        self.densities = {}
         self.list = []
         self.all_stopped = False  # Flag to track whether all people have stopped
         self.center_x = center_x  # X-coordinate of the center of the circular formation
         self.center_y = center_y  # Y-coordinate of the center of the circular formation
-        self.radius_inner_circle = radius_inner_circle  # Radius of the inner circular formation
-        radius_outer_circle = 200  # Radius of the outer circular formation
+        self.radius_outer_circle = 200  # Radius of the outer circular formation
+        self.radius_inner_circle = 100
         for i in range(num_people):
             angle = (2 * math.pi / num_people) * i
-            x = self.center_x + radius_outer_circle * math.cos(angle)
-            y = self.center_y + radius_outer_circle * math.sin(angle)
+            x = self.center_x + self.radius_outer_circle * math.cos(angle)
+            y = self.center_y + self.radius_outer_circle * math.sin(angle)
             quadrant = self.determine_quadrant(x, y)
             target_x = self.center_x + (self.center_x - x)
             target_y = self.center_y + (self.center_y - y)
             self.list.append(People("o" + str(i), quadrant, int(x), int(y), target_x, target_y))
-
-    def print_total_displacement(self):
-        for person in self.list:
-            print(f"Total displacement for pedestrian {person.id}: {person.total_displacement}")
-
-    def calculate_density(self, radius_outer_circle):
-        # Calculate density within the outer circle
-        for person in self.list:
-            count = 0
-            for other_person in self.list:
-                if other_person != person:
-                    # Calculate the distance between the two pedestrians
-                    distance_squared = (person.location[0] - other_person.location[0]) ** 2 + \
-                                       (person.location[1] - other_person.location[1]) ** 2
-                    distance = math.sqrt(distance_squared)
-                    # Check if the other person is within the outer circle
-                    if distance <= radius_outer_circle:
-                        count += 1
-            # Calculate density based on the count of pedestrians within the circle
-            area_circle = math.pi * radius_outer_circle ** 2
-            density = count / area_circle
-            self.densities.setdefault(person.id, []).append(density)
-
-        # Calculate density within the inner circle
-        count_inner_circle = 0
-        for person in self.list:
-            # Check if the person is within the inner circle
-            if math.sqrt((person.location[0] - self.center_x) ** 2 + (person.location[1] - self.center_y) ** 2) <= self.radius_inner_circle:
-                count_inner_circle += 1
-
-        area_inner_circle = math.pi * self.radius_inner_circle ** 2
-        density_inner_circle = count_inner_circle / area_inner_circle
-        self.densities['inner_circle'] = density_inner_circle
 
     @staticmethod
     def determine_quadrant(x, y):
@@ -179,7 +57,17 @@ class PeopleList:
         else:
             return 4
 
+    def calculate_instantaneous_density(self):
+        # Calculate the number of people within the inner circle of radius 1 meter
+        num_people_inner_circle = sum(1 for person in self.list if ((person.location[0] - self.center_x) ** 2 + (person.location[1] - self.center_y) ** 2) <= 1 ** 2)
 
+        # Calculate the area of the inner circle
+        area_inner_circle = math.pi * (1 ** 2)
+
+        # Calculate instantaneous density
+        density = num_people_inner_circle / area_inner_circle
+
+        return density
 
 
     def calculate(self, arg_A, arg_B, arg_C):
@@ -229,10 +117,8 @@ class PeopleList:
                     wall_force = (0, -arg_A * math.exp(d_iW / (100 * arg_B)))
 
             # Calculate total force
-            total_force_x = desired_force[0] + interaction_force[0] + wall_force[0] + social_force[0] + friction_force[
-                0]
-            total_force_y = desired_force[1] + interaction_force[1] + wall_force[1] + social_force[1] + friction_force[
-                1]
+            total_force_x = desired_force[0] + interaction_force[0] + wall_force[0] + social_force[0] + friction_force[0]
+            total_force_y = desired_force[1] + interaction_force[1] + wall_force[1] + social_force[1] + friction_force[1]
 
             # Calculate acceleration
             acceleration_x = total_force_x / people.weight
@@ -275,11 +161,10 @@ class PeopleList:
 
     def count_size_and_v(self):
         total_num = 0
-        total_v = 0
+        total_speed = 0
         for people in self.list:
-            if 200 <= people.location[0] <= 900:
+            if 200 <= people.location[0] <= 900:  # Assuming the area of interest is defined by x-coordinates
                 total_num += 1
-                total_v += math.sqrt(people.v[0] ** 2 + people.v[1] ** 2)
-        if total_num != 0:
-            total_v /= total_num
-        return total_num, total_v
+                total_speed += math.sqrt(people.v[0] ** 2 + people.v[1] ** 2)
+        average_speed = total_speed / total_num if total_num != 0 else 0
+        return total_num, average_speed
